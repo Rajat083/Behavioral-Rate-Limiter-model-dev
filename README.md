@@ -48,20 +48,6 @@ We ask:
 
 ---
 
-### 🤖 Machine Learning Models
-
-* #### **K-Nearest Neighbors (KNN)**
-  - Simple classification
-  - Supervised learning algorithm
-  - Effective for small datasets
-
-* #### **Isolation Forest (Recommended)**
-  - Detects anomalies
-  - Unsupervised learning algorithm
-  - Effective for high-dimensional data
-
----
-
 ## 🏗️ Architecture
 
 <p align="center">
