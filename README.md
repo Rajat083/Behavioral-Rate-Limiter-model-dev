@@ -57,7 +57,7 @@ We ask:
 
 * #### **Isolation Forest (Recommended)**
   - Detects anomalies
-  - Unsupervised leaarning algorithm
+  - Unsupervised learning algorithm
   - Effective for high-dimensional data
 
 ---
