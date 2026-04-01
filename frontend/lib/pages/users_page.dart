@@ -1,5 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+const String _backendBaseUrl = String.fromEnvironment(
+  'BACKEND_URL',
+  defaultValue: 'http://localhost:4000',
+);
 
 class UserInstance {
   final String id;
@@ -21,8 +28,53 @@ class UsersPage extends StatefulWidget {
 class _UsersPageState extends State<UsersPage> {
   final List<UserInstance> _instances = [];
 
-  void _sendRequest(String name) {
-    print("Sending Request for $name");
+  Future<void> _sendRequest(String name, {bool showFeedback = true}) async {
+    final uri = Uri.parse('$_backendBaseUrl/api/events');
+    final body = {
+      'userId': name,
+      'path': '/frontend/simulated',
+      'method': 'GET',
+      'protocol': 'tcp',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'payloadBytes': 400,
+      'responseBytes': 900,
+    };
+
+    try {
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final decision = data['decision'] ?? 'unknown';
+        final score = data['riskScore'] ?? '-';
+
+        if (showFeedback) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$name -> $decision (risk: $score)')),
+          );
+        }
+        return;
+      }
+
+      if (showFeedback) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Request failed for $name (${response.statusCode})')),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      if (showFeedback) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not reach backend for $name')),
+        );
+      }
+    }
   }
 
   void _showCreateDialog() {
@@ -70,7 +122,10 @@ class _UsersPageState extends State<UsersPage> {
     final newInst = UserInstance(id: DateTime.now().toString(), name: name, isAutomatic: isAuto, interval: interval);
 
     if (isAuto) {
-      newInst.timer = Timer.periodic(Duration(milliseconds: interval), (timer) => _sendRequest(name));
+      newInst.timer = Timer.periodic(
+        Duration(milliseconds: interval),
+        (timer) => _sendRequest(name, showFeedback: false),
+      );
     }
 
     setState(() {
